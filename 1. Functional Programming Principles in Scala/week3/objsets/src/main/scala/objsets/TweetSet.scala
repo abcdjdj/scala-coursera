@@ -65,7 +65,8 @@ abstract class TweetSet extends TweetSetInterface {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def mostRetweeted: Tweet = ???
+  def mostRetweeted: Tweet
+  def mostRetweetedAcc: Tweet
 
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
@@ -76,7 +77,7 @@ abstract class TweetSet extends TweetSetInterface {
    * Question: Should we implment this method here, or should it remain abstract
    * and be implemented in the subclasses?
    */
-  def descendingByRetweet: TweetList = ???
+  def descendingByRetweet: TweetList
 
   /**
    * The following methods are already implemented
@@ -111,6 +112,13 @@ class Empty extends TweetSet {
 
   def union(that: TweetSet): TweetSet = that
 
+  def mostRetweeted: Tweet = throw new NoSuchElementException
+
+  /* Used by the implementation in NonEmpty */
+  def mostRetweetedAcc: Tweet = new Tweet("", "", -1)
+
+  def descendingByRetweet: TweetList = Nil
+
   /**
    * The following methods are already implemented
    */
@@ -135,6 +143,24 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     val tmp1 = right.union(that)
     val tmp2 = left.union(tmp1)
     tmp2.incl(elem)
+  }
+
+  def mostRetweeted: Tweet = mostRetweetedAcc
+
+  def mostRetweetedAcc: Tweet = {
+    val left_max = left.mostRetweetedAcc
+    val right_max = right.mostRetweetedAcc
+    if(left_max.retweets > right_max.retweets && left_max.retweets > elem.retweets)
+        left_max
+    else if(right_max.retweets > left_max.retweets && right_max.retweets > elem.retweets)
+        right_max
+    else
+        elem
+  }
+
+  def descendingByRetweet: TweetList = {
+    val max_tweet = mostRetweeted
+    new Cons(max_tweet, remove(max_tweet).descendingByRetweet)
   }
 
   /**
