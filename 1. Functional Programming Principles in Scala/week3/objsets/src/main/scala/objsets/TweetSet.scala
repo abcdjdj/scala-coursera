@@ -66,7 +66,7 @@ abstract class TweetSet extends TweetSetInterface {
    * and be implemented in the subclasses?
    */
   def mostRetweeted: Tweet
-  def mostRetweetedAcc: Tweet
+  def mostRetweetedAcc(maxSoFar: Tweet): Tweet
 
   /**
    * Returns a list containing all tweets of this set, sorted by retweet count
@@ -115,7 +115,7 @@ class Empty extends TweetSet {
   def mostRetweeted: Tweet = throw new NoSuchElementException
 
   /* Used by the implementation in NonEmpty */
-  def mostRetweetedAcc: Tweet = new Tweet("", "", -1)
+  def mostRetweetedAcc(maxSoFar: Tweet): Tweet = maxSoFar
 
   def descendingByRetweet: TweetList = Nil
 
@@ -145,17 +145,11 @@ class NonEmpty(elem: Tweet, left: TweetSet, right: TweetSet) extends TweetSet {
     tmp2.incl(elem)
   }
 
-  def mostRetweeted: Tweet = mostRetweetedAcc
+  def mostRetweeted: Tweet = mostRetweetedAcc(elem)
 
-  def mostRetweetedAcc: Tweet = {
-    val left_max = left.mostRetweetedAcc
-    val right_max = right.mostRetweetedAcc
-    if(left_max.retweets > right_max.retweets && left_max.retweets > elem.retweets)
-        left_max
-    else if(right_max.retweets > left_max.retweets && right_max.retweets > elem.retweets)
-        right_max
-    else
-        elem
+  def mostRetweetedAcc(maxSoFar: Tweet): Tweet = {
+    val tmp = right.mostRetweetedAcc(left.mostRetweetedAcc(maxSoFar))
+    if(tmp.retweets > elem.retweets) tmp else elem
   }
 
   def descendingByRetweet: TweetList = {
@@ -216,14 +210,14 @@ object GoogleVsApple {
   val google = List("android", "Android", "galaxy", "Galaxy", "nexus", "Nexus")
   val apple = List("ios", "iOS", "iphone", "iPhone", "ipad", "iPad")
 
-  lazy val googleTweets: TweetSet = ???
-  lazy val appleTweets: TweetSet = ???
+  lazy val googleTweets: TweetSet = TweetReader.allTweets.filter((tw => google.exists(str => tw.text.contains(str))))
+  lazy val appleTweets: TweetSet = TweetReader.allTweets.filter((tw => apple.exists(str => tw.text.contains(str))))
 
   /**
    * A list of all tweets mentioning a keyword from either apple or google,
    * sorted by the number of retweets.
    */
-  lazy val trending: TweetList = ???
+  lazy val trending: TweetList = googleTweets.union(appleTweets).descendingByRetweet
 }
 
 object Main extends App {
