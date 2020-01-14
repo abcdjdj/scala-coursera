@@ -110,7 +110,7 @@ trait Huffman extends HuffmanInterface {
     def insert(node: CodeTree, trees: List[CodeTree]): List[CodeTree] = {
         if(trees.isEmpty) List(node)
         else if(weight(node) < weight(trees.head)) node :: trees
-        else insert(node, trees.tail)
+        else trees.head :: insert(node, trees.tail)
     }
     if(trees.length < 2) trees else insert(makeCodeTree(trees(0), trees(1)), trees.tail.tail)
   }
